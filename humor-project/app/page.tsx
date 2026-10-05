@@ -1,68 +1,133 @@
-import { createClient } from "@/utils/supabase/server";
+import Link from "next/link";
 import { cookies } from "next/headers";
+import { createClient } from "@/utils/supabase/server";
+import AuthControls from "@/components/auth-controls";
 
 export default async function Home() {
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
-
-  const { data: profiles, error } = await supabase
-    .from("Profiles")
-    .select("id, first_name, last_name")
-    .order("created_at", { ascending: true });
+  const supabase = createClient(await cookies());
+  const [{ data: userData }, { data: profiles, error }] = await Promise.all([
+    supabase.auth.getUser(),
+    supabase
+      .from("profiles")
+      .select("id, first_name, last_name, avatar_path")
+      .order("created_at", { ascending: true }),
+  ]);
+  const user = userData.user;
 
   return (
-    <main className="profiles-page">
-      <section className="profiles-shell" aria-labelledby="profiles-title">
-        <header className="profiles-header">
-          <p className="profiles-kicker">The Humor Project</p>
-          <h1 id="profiles-title">Profiles</h1>
-          <p className="profiles-subtitle">
-            Meet the people behind the punchlines.
-          </p>
-        </header>
+    <main className="site-shell">
+      <header className="site-header">
+        <Link className="brand" href="/" aria-label="The Humor Project home">
+          <span className="brand-mark" aria-hidden="true">ha!</span>
+          <span>The Humor Project</span>
+        </Link>
+        <nav className="header-nav" aria-label="Main navigation">
+          {user ? (
+            <>
+              <Link href="/profile">Profile</Link>
+              <Link href="/after-hours">After hours</Link>
+              <AuthControls signedIn />
+            </>
+          ) : (
+            <>
+              <Link href="#community">Community</Link>
+              <AuthControls />
+            </>
+          )}
+        </nav>
+      </header>
 
-        {error ? (
-          <p className="profiles-state" role="alert">
-            Profiles couldn’t be loaded right now.
+      <section className="hero">
+        <div className="hero-copy">
+          <p className="eyebrow">A little joy, shared</p>
+          <h1>The punchline is better together.</h1>
+          <p className="hero-description">
+            Meet the people behind the giggles, make your profile yours, and
+            save a seat for the after-hours jokes.
           </p>
-        ) : profiles?.length ? (
-          <>
-            <p className="profiles-count">
-              {profiles.length} {profiles.length === 1 ? "profile" : "profiles"}
-            </p>
-            <ul className="profiles-grid" aria-label="Profiles">
-              {profiles.map((profile, index) => {
-                const firstName = profile.first_name?.trim() ?? "";
-                const lastName = profile.last_name?.trim() ?? "";
-                const name = [firstName, lastName].filter(Boolean).join(" ");
-                const initials = `${firstName[0] ?? ""}${lastName[0] ?? ""}`;
+          {user ? (
+            <div className="hero-actions">
+              <Link className="button button-primary" href="/profile">
+                Visit your profile <span aria-hidden="true">↗</span>
+              </Link>
+              <Link className="text-link" href="/after-hours">
+                Open the members room
+              </Link>
+            </div>
+          ) : (
+            <div className="hero-actions">
+              <AuthControls />
+              <span className="fine-print">New here? Google sign-in creates your account.</span>
+            </div>
+          )}
+        </div>
+        <div className="hero-art" role="img" aria-label="A cheerful illustrated burst">
+          <span className="burst burst-one" aria-hidden="true">ha!</span>
+          <span className="burst burst-two" aria-hidden="true">hee</span>
+          <span className="burst burst-three" aria-hidden="true">☺</span>
+          <span className="burst-caption">GOOD MOOD<br />CLUB</span>
+        </div>
+      </section>
 
-                return (
-                  <li className="profile-card" key={profile.id}>
-                    <div className="profile-card-topline">
-                      <span className="profile-avatar" aria-hidden="true">
-                        {initials.toUpperCase() || "?"}
-                      </span>
-                      <span className="profile-card-number">
-                        {String(index + 1).padStart(2, "0")}
-                      </span>
-                    </div>
-                    <p className="profile-card-label">Community member</p>
-                    <h2 className="profile-card-name">
-                      {name || "Unnamed profile"}
-                    </h2>
-                  </li>
-                );
-              })}
-            </ul>
-          </>
+      <section className="members-card" aria-labelledby="members-title">
+        <div className="members-lock" aria-hidden="true">✳</div>
+        <div>
+          <p className="eyebrow">A little something extra</p>
+          <h2 id="members-title">The after-hours joke drawer</h2>
+          <p>There’s a members-only room tucked behind this door.</p>
+        </div>
+        {user ? (
+          <Link className="button button-dark" href="/after-hours">Come on in <span aria-hidden="true">→</span></Link>
         ) : (
-          <p className="profiles-state">
-            No profiles are available to this page yet. Check the Supabase read
-            policy if you expected results.
-          </p>
+          <span className="members-note">Sign in with Google to unlock it</span>
         )}
       </section>
+
+      <section className="community-section" id="community" aria-labelledby="community-title">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">The good company</p>
+            <h2 id="community-title">Meet the community</h2>
+          </div>
+          <p>Every great bit starts with good people.</p>
+        </div>
+
+        {error ? (
+          <p className="notice" role="status">The community list is taking a little break. Try again soon.</p>
+        ) : profiles?.length ? (
+          <ul className="profiles-grid" aria-label="Community profiles">
+            {profiles.map((profile, index) => {
+              const firstName = profile.first_name?.trim() ?? "";
+              const lastName = profile.last_name?.trim() ?? "";
+              const name = [firstName, lastName].filter(Boolean).join(" ");
+              const initials = `${firstName[0] ?? ""}${lastName[0] ?? ""}`.toUpperCase();
+              const avatarUrl = profile.avatar_path
+                ? supabase.storage.from("avatars").getPublicUrl(profile.avatar_path).data.publicUrl
+                : null;
+
+              return (
+                <li className="profile-card" key={profile.id}>
+                  {avatarUrl ? (
+                    <div className="profile-avatar avatar-photo" role="img" aria-label={`${name || "Community member"}'s photo`} style={{ backgroundImage: `url("${avatarUrl}")` }} />
+                  ) : (
+                    <span className="profile-avatar" aria-hidden="true">{initials || "☺"}</span>
+                  )}
+                  <span className="profile-number">{String(index + 1).padStart(2, "0")}</span>
+                  <p className="profile-label">Community member</p>
+                  <h3>{name || "Name to come"}</h3>
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          <p className="notice">No profiles yet. Be the first to join the fun.</p>
+        )}
+      </section>
+
+      <footer className="site-footer">
+        <span>Keep it kind. Keep it funny.</span>
+        <span>Made for the love of a good laugh.</span>
+      </footer>
     </main>
   );
 }
