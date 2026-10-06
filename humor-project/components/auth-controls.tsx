@@ -13,15 +13,12 @@ export default function AuthControls({ signedIn = false }: AuthControlsProps) {
   const [error, setError] = useState("");
   const router = useRouter();
 
-  async function signInWithGoogle() {
-    setBusy(true);
-    setError("");
-
-    const supabase = createClient();
+  async function startGoogleSignIn(supabase: ReturnType<typeof createClient>) {
     const { data, error: authError } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
+        queryParams: { prompt: "select_account" },
       },
     });
 
@@ -40,6 +37,27 @@ export default function AuthControls({ signedIn = false }: AuthControlsProps) {
     setBusy(false);
   }
 
+  async function signInWithGoogle() {
+    setBusy(true);
+    setError("");
+    await startGoogleSignIn(createClient());
+  }
+
+  async function switchGoogleAccount() {
+    setBusy(true);
+    setError("");
+
+    const supabase = createClient();
+    const { error: authError } = await supabase.auth.signOut();
+    if (authError) {
+      setError(authError.message);
+      setBusy(false);
+      return;
+    }
+
+    await startGoogleSignIn(supabase);
+  }
+
   async function signOut() {
     setBusy(true);
     const supabase = createClient();
@@ -56,6 +74,9 @@ export default function AuthControls({ signedIn = false }: AuthControlsProps) {
   if (signedIn) {
     return (
       <div className="auth-control">
+        <button className="text-button" type="button" onClick={switchGoogleAccount} disabled={busy}>
+          {busy ? "Opening Google…" : "Use another Google account"}
+        </button>
         <button className="text-button" type="button" onClick={signOut} disabled={busy}>
           {busy ? "Signing out…" : "Sign out"}
         </button>
