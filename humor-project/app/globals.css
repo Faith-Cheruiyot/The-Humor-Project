@@ -92,6 +92,7 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 
 .header-nav > a:hover, .text-link:hover, .back-link a:hover { text-decoration-color: currentColor; }
 .auth-control { align-items: center; display: flex; flex-wrap: wrap; gap: 0.6rem; }
+.account-email { background: var(--paper-deep); border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font-size: 0.78rem; font-weight: 700; max-width: min(16rem, 45vw); overflow: hidden; padding: 0.45rem 0.75rem; text-overflow: ellipsis; white-space: nowrap; }
 
 .button {
   align-items: center;

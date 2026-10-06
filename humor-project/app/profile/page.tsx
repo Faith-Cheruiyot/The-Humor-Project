@@ -34,7 +34,7 @@ export default async function ProfilePage() {
         <nav className="header-nav" aria-label="Main navigation">
           <Link href="/">Community</Link>
           <Link href="/after-hours">After hours</Link>
-          <AuthControls signedIn />
+          <AuthControls signedIn email={user.email} />
         </nav>
       </header>
 

@@ -27,7 +27,7 @@ export default async function Home() {
               <Link href="/caption-club">Caption Club</Link>
               <Link href="/profile">Profile</Link>
               <Link href="/after-hours">After hours</Link>
-              <AuthControls signedIn />
+              <AuthControls signedIn email={user.email} />
             </>
           ) : (
             <>

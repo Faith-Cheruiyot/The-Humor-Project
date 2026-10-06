@@ -76,7 +76,7 @@ export default async function CaptionClubPage() {
         <nav className="header-nav" aria-label="Main navigation">
           <Link href="/">Community</Link>
           {user ? <Link href="/profile">Profile</Link> : null}
-          {user ? <AuthControls signedIn /> : <AuthControls />}
+          {user ? <AuthControls signedIn email={user.email} /> : <AuthControls />}
         </nav>
       </header>
 

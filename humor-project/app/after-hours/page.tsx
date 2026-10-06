@@ -31,7 +31,7 @@ export default async function AfterHoursPage() {
         <nav className="header-nav" aria-label="Main navigation">
           <Link href="/">Community</Link>
           <Link href="/profile">Profile</Link>
-          <AuthControls signedIn />
+          <AuthControls signedIn email={user.email} />
         </nav>
       </header>
 

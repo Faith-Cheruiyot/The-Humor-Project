@@ -6,9 +6,10 @@ import { createClient } from "@/utils/supabase/client";
 
 type AuthControlsProps = {
   signedIn?: boolean;
+  email?: string | null;
 };
 
-export default function AuthControls({ signedIn = false }: AuthControlsProps) {
+export default function AuthControls({ signedIn = false, email }: AuthControlsProps) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
@@ -74,6 +75,7 @@ export default function AuthControls({ signedIn = false }: AuthControlsProps) {
   if (signedIn) {
     return (
       <div className="auth-control">
+        {email ? <span className="account-email" title={email}>{email}</span> : null}
         <button className="text-button" type="button" onClick={switchGoogleAccount} disabled={busy}>
           {busy ? "Opening Google…" : "Use another Google account"}
         </button>
