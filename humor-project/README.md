@@ -1,36 +1,18 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# The Humor Project
 
-## Getting Started
+A small community comedy club with Google sign-in, member profiles, a private after-hours joke drawer, and Caption Club.
 
-First, run the development server:
+## Caption Club
+
+Signed-in members can give Gemini a campus or New York scene and publish its caption to the shared board. The scene prompt and generated caption are saved together in Supabase. Members can cast one upvote or downvote per caption; the board shows public totals without revealing individual voters.
+
+The Caption Club uses Google's Gemini `generateContent` REST API from a server route. Set `GEMINI_API_KEY` in `.env.local` and in the deployment environment. Keep this key server-side; do not add a `NEXT_PUBLIC_` prefix. 
+
+## Local development
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The schema and RLS policies are in [`supabase/migrations/20261006180457_caption_club_and_rls.sql`](supabase/migrations/20261006180457_caption_club_and_rls.sql). This migration has already been applied to the connected Supabase project.

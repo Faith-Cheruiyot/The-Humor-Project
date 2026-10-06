@@ -24,12 +24,14 @@ export default async function Home() {
         <nav className="header-nav" aria-label="Main navigation">
           {user ? (
             <>
+              <Link href="/caption-club">Caption Club</Link>
               <Link href="/profile">Profile</Link>
               <Link href="/after-hours">After hours</Link>
               <AuthControls signedIn />
             </>
           ) : (
             <>
+              <Link href="/caption-club">Caption Club</Link>
               <Link href="#community">Community</Link>
               <AuthControls />
             </>
@@ -42,13 +44,13 @@ export default async function Home() {
           <p className="eyebrow">A little joy, shared</p>
           <h1>The punchline is better together.</h1>
           <p className="hero-description">
-            Meet the people behind the giggles, make your profile yours, and
-            save a seat for the after-hours jokes.
+            Make a scene into a Gemini-written caption, then help the community
+            decide which punchlines deserve an encore.
           </p>
           {user ? (
             <div className="hero-actions">
-              <Link className="button button-primary" href="/profile">
-                Visit your profile <span aria-hidden="true">↗</span>
+              <Link className="button button-primary" href="/caption-club">
+                Make today’s caption <span aria-hidden="true">↗</span>
               </Link>
               <Link className="text-link" href="/after-hours">
                 Open the members room
@@ -81,6 +83,15 @@ export default async function Home() {
         ) : (
           <span className="members-note">Sign in with Google to unlock it</span>
         )}
+      </section>
+
+      <section className="caption-promo" aria-labelledby="caption-promo-title">
+        <div>
+          <p className="eyebrow">New on the club board</p>
+          <h2 id="caption-promo-title">One scene. A hundred possible punchlines.</h2>
+          <p>Bring a campus or city moment to Caption Club, let Gemini take a swing, and vote for the line that lands.</p>
+        </div>
+        <Link className="button button-dark" href="/caption-club">Open Caption Club <span aria-hidden="true">→</span></Link>
       </section>
 
       <section className="community-section" id="community" aria-labelledby="community-title">

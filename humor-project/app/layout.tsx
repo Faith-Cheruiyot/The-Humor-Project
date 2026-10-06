@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "The Humor Project | A little joy, shared",
-  description: "Meet the people behind the giggles and save a seat in the after-hours joke drawer.",
+  title: "The Humor Project | Caption Club",
+  description: "Turn campus and city scenes into Gemini-written captions, then vote for the community favorites.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
