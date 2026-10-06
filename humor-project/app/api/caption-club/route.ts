@@ -12,6 +12,14 @@ type GeminiResponse = {
   }>;
 };
 
+type GeminiErrorResponse = {
+  error?: {
+    code?: number;
+    message?: string;
+    status?: string;
+  };
+};
+
 export async function POST(request: Request) {
   const supabase = createClient(await cookies());
   const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -62,7 +70,6 @@ export async function POST(request: Request) {
             parts: [{ text: `Write one caption for this scene:\n${prompt}` }],
           }],
           generationConfig: {
-            temperature: 0.9,
             maxOutputTokens: 120,
           },
         }),
@@ -75,7 +82,27 @@ export async function POST(request: Request) {
   }
 
   if (!geminiResponse.ok) {
-    return NextResponse.json({ error: "Gemini could not make that caption. Please try a different scene." }, { status: 502 });
+    const providerError = await geminiResponse.json().catch(() => null) as GeminiErrorResponse | null;
+    console.error("Gemini generation failed", {
+      httpStatus: geminiResponse.status,
+      apiStatus: providerError?.error?.status,
+      message: providerError?.error?.message?.slice(0, 300),
+    });
+
+    let message = "Gemini could not make that caption. Please try again.";
+    if (geminiResponse.status === 400) {
+      message = "Gemini rejected the request. Please try again with a different scene.";
+    } else if (geminiResponse.status === 401 || geminiResponse.status === 403) {
+      message = "Gemini rejected the API key. Check GEMINI_API_KEY in the deployment settings.";
+    } else if (geminiResponse.status === 404) {
+      message = "Gemini could not find the configured model for this project.";
+    } else if (geminiResponse.status === 429) {
+      message = "Gemini is at its request limit. Please wait a moment and try again.";
+    } else if (geminiResponse.status >= 500) {
+      message = "Gemini is temporarily unavailable. Please try again shortly.";
+    }
+
+    return NextResponse.json({ error: message }, { status: 502 });
   }
 
   let generated: GeminiResponse;
