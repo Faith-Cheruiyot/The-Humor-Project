@@ -2,7 +2,8 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 
-const GEMINI_MODEL = "gemini-3.8-flash";
+const GEMINI_PROVIDER = "Gemini 3.5 Lite";
+const GEMINI_MODEL = "gemini-3.5-flash-lite";
 
 type GeminiResponse = {
   candidates?: Array<{
@@ -83,7 +84,7 @@ export async function POST(request: Request) {
 
   if (!geminiResponse.ok) {
     const providerError = await geminiResponse.json().catch(() => null) as GeminiErrorResponse | null;
-    console.error("Gemini generation failed", {
+    console.error(`${GEMINI_PROVIDER} generation failed`, {
       httpStatus: geminiResponse.status,
       apiStatus: providerError?.error?.status,
       message: providerError?.error?.message?.slice(0, 300),

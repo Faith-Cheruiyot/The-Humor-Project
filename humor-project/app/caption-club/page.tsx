@@ -81,7 +81,7 @@ export default async function CaptionClubPage() {
       </header>
 
       <section className="caption-club-heading">
-        <p className="eyebrow">Caption Club · made with Gemini</p>
+        <p className="eyebrow">Caption Club · made with Gemini 3.5 Lite</p>
         <h1>Everyday scenes, unnecessarily great captions.</h1>
         <p>Set up a campus or New York moment. Gemini writes one caption, the club keeps the prompt with it, and members vote for the line that lands.</p>
       </section>
