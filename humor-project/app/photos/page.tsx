@@ -3,24 +3,16 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import AuthControls from "@/components/auth-controls";
 import PhotoStudio from "@/components/photo-studio";
-import { loadPhotoGallery } from "@/lib/photo-gallery";
-import type { PhotoGalleryPage } from "@/lib/photos";
 import { createClient } from "@/utils/supabase/server";
 
 export const metadata: Metadata = {
   title: "Photos & AI Memes | The Humor Project",
-  description: "Upload a photo, let AI write the punchline, and keep every finished meme in your own gallery.",
+  description: "Upload a photo, let AI write the punchline, and share it in the community meme feed.",
 };
 
 export default async function PhotosPage() {
   const supabase = createClient(await cookies());
   const { data: { user } } = await supabase.auth.getUser();
-  let gallery: PhotoGalleryPage = { generations: [], nextCursor: null };
-  let loadError = false;
-  if (user) {
-    try { gallery = await loadPhotoGallery(supabase, user.id); }
-    catch { loadError = true; }
-  }
   return (
     <main className="site-shell">
       <header className="site-header">
@@ -35,9 +27,9 @@ export default async function PhotosPage() {
       <section className="caption-club-heading photo-page-heading">
         <p className="eyebrow">AI retrieval · Photos</p>
         <h1>A photo’s worth a thousand laughs.</h1>
-        <p>Upload a moment. AI finds the punchline. Get a finished meme with the caption right on your picture, and keep every take in your gallery.</p>
+        <p>Upload a moment. AI finds the punchline. See the caption below your photo, then let the community rate it on the homepage.</p>
       </section>
-      <PhotoStudio key={user?.id ?? "guest"} signedIn={Boolean(user)} initialGallery={gallery} loadError={loadError} />
+      <PhotoStudio key={user?.id ?? "guest"} userId={user?.id ?? null} />
       <footer className="site-footer"><span>Keep it kind. Keep it funny.</span><Link href="/caption-club">Prefer to start with words? Try Caption Club →</Link></footer>
     </main>
   );

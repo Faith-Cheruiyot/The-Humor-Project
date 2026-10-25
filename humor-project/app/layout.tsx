@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "The Humor Project | Caption Club",
-  description: "Turn photos into AI-captioned memes, keep your own meme gallery, and vote for the community’s favorite captions.",
+  description: "Share photos with AI-written captions, browse the community meme feed, and vote for the punchlines that land.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

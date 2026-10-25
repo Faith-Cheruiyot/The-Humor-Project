@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { PHOTO_BUCKET, PHOTO_MAX_BYTES, PHOTO_MIME_TYPES } from "@/lib/photos";
 import { generatePhotoCaption, PHOTO_MODEL, PhotoCaptionError } from "@/lib/gemini-photo";
-import { preparePhoto, renderMeme } from "@/lib/meme";
+import { preparePhoto } from "@/lib/photo-processing";
 import { loadPhotoGallery, PHOTO_COLUMNS } from "@/lib/photo-gallery";
 import { parseGalleryCursor } from "@/lib/gallery-cursor";
 
@@ -53,8 +53,7 @@ async function readPhotoForm(request: Request) {
 
 export async function GET(request: Request) {
   const supabase = createClient(await cookies());
-  const { data: { user }, error } = await supabase.auth.getUser();
-  if (error || !user) return NextResponse.json({ error: "Sign in to see your meme gallery." }, { status: 401, headers: privateHeaders });
+  const { data: { user } } = await supabase.auth.getUser();
   const rawCursor = new URL(request.url).searchParams.get("cursor");
   let cursor;
   try {
@@ -63,9 +62,9 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "The gallery page is invalid. Refresh and try again." }, { status: 400, headers: privateHeaders });
   }
   try {
-    return NextResponse.json(await loadPhotoGallery(supabase, user.id, cursor), { headers: privateHeaders });
+    return NextResponse.json(await loadPhotoGallery(supabase, user?.id ?? null, cursor), { headers: privateHeaders });
   } catch {
-    return NextResponse.json({ error: "Your gallery could not be loaded. Please try again." }, { status: 500, headers: privateHeaders });
+    return NextResponse.json({ error: "The meme feed could not be loaded. Please try again." }, { status: 500, headers: privateHeaders });
   }
 }
 
@@ -85,18 +84,18 @@ export async function POST(request: Request) {
     if (rawContext instanceof File || context.length > 500) throw new UploadError("Keep the optional context under 500 characters.");
 
     let prepared: Awaited<ReturnType<typeof preparePhoto>>;
+    const sourcePhoto = Buffer.from(await photo.arrayBuffer());
     try {
-      prepared = await preparePhoto(Buffer.from(await photo.arrayBuffer()));
+      prepared = await preparePhoto(sourcePhoto);
     } catch {
       throw new UploadError("This photo could not be read. Use a still JPG, PNG, or WebP at least 128 pixels wide and tall (up to 25 megapixels).");
     }
     const caption = await generatePhotoCaption(prepared.data, context);
-    const { width, height } = prepared.info;
-    const meme = await renderMeme(prepared.data, caption, width, height);
+    const { width, height } = prepared;
     const id = randomUUID();
-    const imagePath = `${user.id}/${id}.jpg`;
+    const imagePath = `${user.id}/${id}.${prepared.extension}`;
     const bucket = supabase.storage.from(PHOTO_BUCKET);
-    const { error: uploadError } = await bucket.upload(imagePath, meme, { contentType: "image/jpeg", upsert: false });
+    const { error: uploadError } = await bucket.upload(imagePath, sourcePhoto, { contentType: prepared.mimeType, upsert: false });
     if (uploadError) {
       console.error("Meme image could not be saved", { code: uploadError.name });
       return NextResponse.json({ error: "Your meme could not be saved. Please try again." }, { status: 500, headers: privateHeaders });
@@ -113,7 +112,7 @@ export async function POST(request: Request) {
     const { data: signed } = await bucket.createSignedUrl(imagePath, 3600);
     const { image_path: savedPath, ...generation } = saved;
     void savedPath;
-    return NextResponse.json({ generation: { ...generation, imageUrl: signed?.signedUrl ?? null } }, { status: 201, headers: privateHeaders });
+    return NextResponse.json({ generation: { ...generation, imageUrl: signed?.signedUrl ?? null, authorName: "You", myVote: null } }, { status: 201, headers: privateHeaders });
   } catch (error) {
     if (error instanceof UploadError || error instanceof PhotoCaptionError) {
       return NextResponse.json({ error: error.message }, { status: error.status, headers: privateHeaders });

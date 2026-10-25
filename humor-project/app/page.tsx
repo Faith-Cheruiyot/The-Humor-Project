@@ -2,6 +2,9 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import { createClient } from "@/utils/supabase/server";
 import AuthControls from "@/components/auth-controls";
+import PhotoFeed from "@/components/photo-feed";
+import { loadPhotoGallery } from "@/lib/photo-gallery";
+import type { PhotoGalleryPage } from "@/lib/photos";
 
 export default async function Home() {
   const supabase = createClient(await cookies());
@@ -13,6 +16,10 @@ export default async function Home() {
       .order("created_at", { ascending: true }),
   ]);
   const user = userData.user;
+  let memeFeed: PhotoGalleryPage = { generations: [], nextCursor: null };
+  let memeFeedError = false;
+  try { memeFeed = await loadPhotoGallery(supabase, user?.id ?? null); }
+  catch { memeFeedError = true; }
 
   return (
     <main className="site-shell">
@@ -23,6 +30,7 @@ export default async function Home() {
         </Link>
         <nav className="header-nav" aria-label="Main navigation">
           <Link href="/photos">Photos</Link>
+          <Link href="#meme-feed">Meme feed</Link>
           {user ? (
             <>
               <Link href="/caption-club">Caption Club</Link>
@@ -45,13 +53,13 @@ export default async function Home() {
           <p className="eyebrow">A little joy, shared</p>
           <h1>The punchline is better together.</h1>
           <p className="hero-description">
-            Make a scene into a Gemini-written caption, then help the community
-            decide which punchlines deserve an encore.
+            Share a photo, let AI find the punchline, and help the community
+            decide which memes deserve an encore.
           </p>
           {user ? (
             <div className="hero-actions">
-              <Link className="button button-primary" href="/caption-club">
-                Make today’s caption <span aria-hidden="true">↗</span>
+              <Link className="button button-primary" href="/photos">
+                Make a photo meme <span aria-hidden="true">↗</span>
               </Link>
               <Link className="text-link" href="/after-hours">
                 Open the members room
@@ -71,6 +79,8 @@ export default async function Home() {
           <span className="burst-caption">GOOD MOOD<br />CLUB</span>
         </div>
       </section>
+
+      <PhotoFeed key={user?.id ?? "guest"} initialPage={memeFeed} userId={user?.id ?? null} loadError={memeFeedError} />
 
       <section className="members-card" aria-labelledby="members-title">
         <div className="members-lock" aria-hidden="true">✳</div>
@@ -99,7 +109,7 @@ export default async function Home() {
         <div>
           <p className="eyebrow">AI retrieval · Photos</p>
           <h2 id="photo-promo-title">Your photo. Our punchline.</h2>
-          <p>Upload a photo and get a finished meme with an AI-written caption on the picture. Every generation stays in your own card gallery.</p>
+          <p>Upload a photo, get an AI-written caption underneath, and share it in the community feed for everyone to enjoy and rate.</p>
         </div>
         <Link className="button button-dark" href="/photos">Make a photo meme <span aria-hidden="true">→</span></Link>
       </section>

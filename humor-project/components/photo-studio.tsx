@@ -1,24 +1,24 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
+import PhotoMemeCard from "@/components/photo-meme-card";
 import { useEffect, useRef, useState, type DragEvent, type FormEvent } from "react";
 import AuthControls from "@/components/auth-controls";
-import { PHOTO_MAX_BYTES, PHOTO_MIME_TYPES, type PhotoGalleryPage, type PhotoGeneration } from "@/lib/photos";
+import { PHOTO_MAX_BYTES, PHOTO_MIME_TYPES, type PhotoGeneration } from "@/lib/photos";
 
-type Props = { signedIn: boolean; initialGallery: PhotoGalleryPage; loadError: boolean };
+type Props = { userId: string | null };
 type SelectedPhoto = { file: File; preview: string };
 
-export default function PhotoStudio({ signedIn, initialGallery, loadError }: Props) {
+export default function PhotoStudio({ userId }: Props) {
+  const signedIn = Boolean(userId);
   const [photo, setPhoto] = useState<SelectedPhoto | null>(null);
   const [context, setContext] = useState("");
   const [busy, setBusy] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
-  const [generations, setGenerations] = useState(initialGallery.generations);
-  const [nextCursor, setNextCursor] = useState(initialGallery.nextCursor);
-  const [galleryError, setGalleryError] = useState(loadError ? "Your gallery could not be loaded. Try again to see your saved memes." : "");
-  const [loadingMore, setLoadingMore] = useState(false);
+  const [latest, setLatest] = useState<PhotoGeneration | null>(null);
   const input = useRef<HTMLInputElement>(null);
   const resultHeading = useRef<HTMLHeadingElement>(null);
   const inFlight = useRef(false);
@@ -64,34 +64,14 @@ export default function PhotoStudio({ signedIn, initialGallery, loadError }: Pro
         return;
       }
       const generation = result.generation;
-      setGenerations((previous) => [generation, ...previous.filter((item) => item.id !== generation.id)]);
-      setMessage("Your meme is ready and saved to your gallery. Generate again for another take.");
+      setLatest(generation);
+      setMessage("Your meme is posted to the community feed. Generate again for another take.");
       resultHeading.current?.focus();
     } catch {
-      setError("The connection was interrupted. Check your gallery before trying again in case your meme was saved.");
+      setError("The connection was interrupted. Check the homepage feed before trying again in case your meme was posted.");
     } finally {
       inFlight.current = false;
       setBusy(false);
-    }
-  }
-
-  async function loadGallery(reset = false) {
-    if (loadingMore) return;
-    setLoadingMore(true);
-    setGalleryError("");
-    try {
-      const response = await fetch(`/api/photos${!reset && nextCursor ? `?cursor=${encodeURIComponent(nextCursor)}` : ""}`, { cache: "no-store" });
-      const result = await response.json() as PhotoGalleryPage & { error?: string };
-      if (!response.ok || !Array.isArray(result.generations)) throw new Error(result.error ?? "Your gallery could not be loaded.");
-      setGenerations((previous) => {
-        const combined = reset ? result.generations : [...previous, ...result.generations];
-        return [...new Map(combined.map((item) => [item.id, item])).values()];
-      });
-      setNextCursor(result.nextCursor);
-    } catch (error) {
-      setGalleryError(error instanceof Error ? error.message : "Your gallery could not be loaded. Please try again.");
-    } finally {
-      setLoadingMore(false);
     }
   }
 
@@ -107,7 +87,7 @@ export default function PhotoStudio({ signedIn, initialGallery, loadError }: Pro
               onDragOver={(event) => { event.preventDefault(); if (!busy) setDragging(true); }}
               onDragLeave={() => setDragging(false)} onDrop={dropPhoto}>
               {photo ? (
-                <Image className="photo-preview" src={photo.preview} alt="Your selected photo before adding a meme caption" width={800} height={600} unoptimized />
+                <Image className="photo-preview" src={photo.preview} alt="Your selected photo" width={800} height={600} unoptimized />
               ) : <span className="photo-upload-icon" aria-hidden="true">↥</span>}
               <label className="photo-upload-label" htmlFor="meme-photo">{photo ? "Choose a different photo" : "Choose a photo or drop it here"}</label>
               <input ref={input} className="file-input photo-file-input" id="meme-photo" name="photo" type="file"
@@ -131,8 +111,8 @@ export default function PhotoStudio({ signedIn, initialGallery, loadError }: Pro
                 {busy ? "Making your meme…" : "Generate meme"}
               </button>
             </div>
-            {!signedIn ? <div className="photo-signin"><p>Sign in to generate memes and keep your gallery.</p><AuthControls returnTo="/photos" /></div> : null}
-            <p className="caption-privacy-note">Your photo and context are sent to Gemini to write the caption. The finished meme is saved to your private gallery.</p>
+            {!signedIn ? <div className="photo-signin"><p>Sign in to generate a caption and share your photo.</p><AuthControls returnTo="/photos" /></div> : null}
+            <p className="caption-privacy-note">Your photo and context are sent to Gemini to write the caption. Your photo and generated caption will be public on the homepage.</p>
             {message ? <p className="form-message form-success" role="status">{message}</p> : null}
             {error ? <p className="form-message form-error" role="alert">{error}</p> : null}
           </form>
@@ -145,40 +125,18 @@ export default function PhotoStudio({ signedIn, initialGallery, loadError }: Pro
           <ol>
             <li><span>1</span><div><strong>Upload a photo</strong><p>Campus chaos, a dramatic pet, or your everyday comedy.</p></div></li>
             <li><span>2</span><div><strong>Let AI find the funny</strong><p>Gemini writes a caption inspired by what’s in the picture.</p></div></li>
-            <li><span>3</span><div><strong>Keep the finished meme</strong><p>We put the caption on your photo and save it below, ready to download.</p></div></li>
+            <li><span>3</span><div><strong>Share with the club</strong><p>Your photo and caption appear together in the homepage feed, where members can rate them.</p></div></li>
           </ol>
         </aside>
       </div>
 
-      <section className="photo-gallery" aria-labelledby="photo-gallery-title">
+      <section className="photo-gallery" aria-labelledby="photo-result-title">
         <div className="section-heading">
-          <div><p className="eyebrow">02 · Keep the good ones. And the weird ones.</p>
-            <h2 id="photo-gallery-title" ref={resultHeading} tabIndex={-1}>Your meme gallery</h2>
-          </div>
-          {signedIn ? <button className="text-button" type="button" disabled={loadingMore || busy} onClick={() => void loadGallery(true)}>{loadingMore ? "Loading…" : "Refresh gallery"}</button> : null}
+          <div><p className="eyebrow">02 · Share the laugh</p><h2 id="photo-result-title" ref={resultHeading} tabIndex={-1}>Your latest post</h2></div>
+          <Link className="text-link" href="/#meme-feed">See the community feed →</Link>
         </div>
-        <p className="photo-gallery-description">Every generation gets its own card. Only you can see your gallery.</p>
-        {galleryError ? <p className="form-message form-error" role="alert">{galleryError} <button className="text-button" type="button" disabled={loadingMore} onClick={() => void loadGallery(true)}>Try again</button></p> : null}
-        {generations.length ? (
-          <div className="photo-gallery-grid">
-            {generations.map((generation) => (
-              <article className="photo-meme-card" key={generation.id}>
-                <a className="photo-meme-image-link" href={`/api/photos/${generation.id}/download`} aria-label={`Download meme: ${generation.caption}`}>
-                  {generation.imageUrl ? <Image className="photo-meme-image" src={generation.imageUrl} alt={generation.caption}
-                    width={generation.width} height={generation.height} unoptimized /> : <span className="photo-image-unavailable">Preview unavailable. Download your saved meme.</span>}
-                </a>
-                <div className="photo-meme-card-body">
-                  <h3>{generation.caption}</h3>
-                  <div className="photo-meme-card-footer">
-                    <time dateTime={generation.created_at}>{new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeZone: "America/New_York" }).format(new Date(generation.created_at))}</time>
-                    <a className="text-link" href={`/api/photos/${generation.id}/download`}>Download <span aria-hidden="true">↓</span></a>
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-        ) : !galleryError ? <div className="photo-gallery-empty"><span aria-hidden="true">☺</span><h3>Your first meme belongs here.</h3><p>{signedIn ? "Upload a photo above. We’ll take care of the punchline." : "Sign in and turn a photo into your first meme."}</p></div> : null}
-        {nextCursor ? <button className="button photo-load-more" type="button" disabled={loadingMore || busy} onClick={() => void loadGallery()}>{loadingMore ? "Loading memes…" : "Load more memes"}</button> : null}
+        {latest ? <div className="photo-result-card"><PhotoMemeCard key={latest.id} generation={latest} userId={userId} /></div>
+          : <div className="photo-gallery-empty"><span aria-hidden="true">☺</span><h3>Your captioned photo belongs here.</h3><p>Every generation gets its own card in the community feed.</p></div>}
       </section>
     </>
   );

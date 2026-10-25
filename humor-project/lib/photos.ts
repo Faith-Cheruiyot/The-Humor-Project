@@ -6,11 +6,15 @@ export const PHOTO_PAGE_SIZE = 18;
 export type PhotoGeneration = {
   id: string;
   caption: string;
-  context: string;
   created_at: string;
+  created_by: string;
   width: number;
   height: number;
   imageUrl: string | null;
+  authorName: string;
+  upvotes: number;
+  downvotes: number;
+  myVote: -1 | 1 | null;
 };
 
 export type PhotoGalleryPage = {

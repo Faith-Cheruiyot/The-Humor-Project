@@ -4,13 +4,15 @@ A small community comedy club with Google sign-in, member profiles, a private af
 
 ## Photos / AI retrieval
 
-The Photos section at `/photos` lets signed-in members upload a JPG, PNG, or WebP (up to 4 MB and 25 megapixels, at least 128 × 128 pixels). Gemini reads the photo and optional context to write a short caption. The server renders that caption directly onto the picture in white text with a black outline and saves the finished JPEG to the member’s private card gallery. Each generation is a separate card with an authenticated download; older cards are available with **Load more memes**.
+The Photos section at `/photos` lets signed-in members upload a JPG, PNG, or WebP (up to 4 MB and 25 megapixels, at least 128 × 128 pixels). Gemini reads the photo and optional context to write a short caption. The original upload is saved unchanged, and the caption appears underneath it in a card. No caption overlay or downloadable composite image is created.
 
-Original uploads are processed in memory and are not stored. Finished memes are stored in the private `caption-memes` Supabase Storage bucket, with metadata in `photo_generations`. Both use ownership policies. Image previews use short-lived signed URLs; downloads verify the user again. The same server-only `GEMINI_API_KEY` used by Caption Club powers photo captions. No additional key is needed.
+Every generation is posted to the public meme feed on the homepage. Anyone can browse cards and load older posts. Signed-in members can cast one upvote or downvote per meme; public totals and scores appear on each card, while individual votes remain private. Optional scene context is excluded from public database read privileges.
 
-Apply `supabase/migrations/20261025223704_photo_meme_gallery.sql` to any other deployment’s Supabase project before using Photos. `sharp` handles orientation, image-size limits, metadata removal, and meme rendering; the photo API uses the Node.js runtime.
+Photos are stored in `caption-memes`, with metadata and totals in `photo_generations` and ratings in `photo_votes`. The bucket remains private; storage policies allow signed previews of published posts. Original uploads are preserved, so members should choose photos they want to share publicly. Images generated before this change retain their baked-in text because their original uploads were not stored.
 
-Run `npm test` on Node.js 22.18+ for the photo-processing and caption-service checks, and `npm run build` to verify the application.
+The server-only `GEMINI_API_KEY` used by Caption Club also powers photo captions. Apply the migrations in `supabase/migrations/` in order when setting up another deployment. The photo API uses the Node.js runtime; `sharp` validates uploads and prepares a bounded image for AI analysis.
+
+Run `npm test` on Node.js 22.18+ for image-processing and caption-service checks. `tests/photo-gallery-rls.sql` verifies public reads, ownership, private votes, duplicate-vote protection, and score integrity in a rolled-back transaction. Build with `npm run build` (or `npm run build -- --webpack` where Turbopack worker ports are restricted).
 
 ## Caption Club
 

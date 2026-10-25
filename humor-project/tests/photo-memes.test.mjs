@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test, afterEach } from "node:test";
 import sharp from "sharp";
-import { preparePhoto, renderMeme, memeOverlay } from "../lib/meme.ts";
+import { preparePhoto } from "../lib/photo-processing.ts";
 import { generatePhotoCaption, PhotoCaptionError } from "../lib/gemini-photo.ts";
 import { parseGalleryCursor } from "../lib/gallery-cursor.ts";
 
@@ -16,11 +16,13 @@ afterEach(() => {
 test("photo normalization respects EXIF orientation, bounds output, and strips metadata", async () => {
   const source = await sharp({ create: { width: 2400, height: 1200, channels: 3, background: "#eac856" } })
     .jpeg().withMetadata({ orientation: 6 }).toBuffer();
-  const { data, info } = await preparePhoto(source);
-  assert.equal(info.width, 800);
-  assert.equal(info.height, 1600);
+  const { data, width, height } = await preparePhoto(source);
+  assert.equal(width, 1200);
+  assert.equal(height, 2400);
   const metadata = await sharp(data).metadata();
   assert.equal(metadata.format, "jpeg");
+  assert.equal(metadata.width, 800);
+  assert.equal(metadata.height, 1600);
   assert.equal(metadata.exif, undefined);
 });
 
@@ -30,37 +32,25 @@ test("invalid images, tiny images, and unsupported formats are rejected before A
   await assert.rejects(() => preparePhoto(tiny), /128/);
   await assert.rejects(() => preparePhoto(Buffer.from('<svg width="300" height="300"></svg>')));
   const panorama = await sharp({ create: { width: 2000, height: 128, channels: 3, background: "white" } }).jpeg().toBuffer();
-  await assert.rejects(() => preparePhoto(panorama), /aspect ratio/);
+  const prepared = await preparePhoto(panorama);
+  assert.equal(prepared.width, 2000);
+  assert.equal(prepared.height, 128);
 });
 
-test("a meme is an actual captioned JPEG with readable text on landscape and portrait photos", async () => {
-  for (const [width, height] of [[800, 600], [300, 1200], [1200, 300]]) {
-    const source = await sharp({ create: { width, height, channels: 3, background: "#eac856" } }).jpeg().toBuffer();
-    const result = await renderMeme(source, "Me pretending this deadline was part of the plan", width, height);
-    const metadata = await sharp(result).metadata();
-    assert.equal(metadata.format, "jpeg");
-    assert.equal(metadata.width, width);
-    assert.equal(metadata.height, height);
-    const { data, info } = await sharp(result).raw().toBuffer({ resolveWithObject: true });
-    let dark = 0;
-    let white = 0;
-    for (let y = Math.floor(height * 0.55); y < height; y++) {
-      for (let x = 0; x < width; x++) {
-        const offset = (y * width + x) * info.channels;
-        if (data[offset] < 60 && data[offset + 1] < 60 && data[offset + 2] < 60) dark++;
-        if (data[offset] > 235 && data[offset + 1] > 235 && data[offset + 2] > 235) white++;
-      }
+test("photo formats and original display dimensions are preserved without compositing text", async () => {
+  for (const [format, mimeType, extension] of [["png", "image/png", "png"], ["webp", "image/webp", "webp"], ["jpeg", "image/jpeg", "jpg"]]) {
+    const source = await sharp({ create: { width: 400, height: 300, channels: 3, background: "#eac856" } }).toFormat(format).toBuffer();
+    const prepared = await preparePhoto(source);
+    assert.equal(prepared.mimeType, mimeType);
+    assert.equal(prepared.extension, extension);
+    assert.equal(prepared.width, 400);
+    assert.equal(prepared.height, 300);
+    const { data, info } = await sharp(prepared.data).raw().toBuffer({ resolveWithObject: true });
+    for (let offset = 0; offset < data.length; offset += info.channels) {
+      assert.ok(Math.abs(data[offset] - 234) < 5 && Math.abs(data[offset + 1] - 200) < 5 && Math.abs(data[offset + 2] - 86) < 5,
+        "AI input contains the photo without text or shading added");
     }
-    assert.ok(dark > 100, "The image has the black meme outline");
-    assert.ok(white > 100, "The image has white caption text");
   }
-});
-
-test("captions cannot inject markup into the image overlay", () => {
-  const overlay = memeOverlay('<script>alert("no")</script> & friends', 800, 600).toString();
-  assert.ok(!overlay.includes("<SCRIPT>"));
-  assert.ok(overlay.includes("&lt;SCRIPT&gt;"));
-  assert.ok(overlay.includes("&amp;"));
 });
 
 test("gallery cursors preserve microsecond ordering and reject invalid or injected filters", () => {
