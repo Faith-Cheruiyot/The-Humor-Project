@@ -7,9 +7,10 @@ import { createClient } from "@/utils/supabase/client";
 type AuthControlsProps = {
   signedIn?: boolean;
   email?: string | null;
+  returnTo?: string;
 };
 
-export default function AuthControls({ signedIn = false, email }: AuthControlsProps) {
+export default function AuthControls({ signedIn = false, email, returnTo }: AuthControlsProps) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
@@ -18,7 +19,7 @@ export default function AuthControls({ signedIn = false, email }: AuthControlsPr
     const { data, error: authError } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${window.location.origin}/auth/callback${returnTo ? `?next=${encodeURIComponent(returnTo)}` : ""}`,
         queryParams: { prompt: "select_account" },
       },
     });

@@ -30,6 +30,8 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   outline-offset: 3px;
 }
 
+h2[tabindex="-1"]:focus { outline: none; }
+
 .site-shell {
   margin: 0 auto;
   max-width: 78rem;
@@ -298,6 +300,54 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 .caption-signin { align-items: center; background: var(--paper-deep); border-radius: 0.8rem; display: flex; flex-wrap: wrap; gap: 0.8rem; justify-content: space-between; margin-bottom: 1rem; padding: 0.8rem 0.9rem; }
 .caption-signin p { color: var(--muted); font-size: 0.78rem; line-height: 1.4; margin: 0; }
 
+.photo-promo { background: var(--yellow); }
+.photo-promo p:not(.eyebrow) { color: #655424; }
+.photo-page-heading { background: var(--yellow); }
+.photo-page-heading .eyebrow { color: #755814; }
+.photo-page-heading > p:last-child { color: #655424; }
+.photo-page-heading h1 { max-width: 15ch; }
+.photo-studio-layout { align-items: start; display: grid; gap: clamp(1.5rem, 4vw, 3.5rem); grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); margin: 2rem 0 4.5rem; }
+.photo-maker { min-width: 0; }
+.photo-dropzone { align-items: center; background: var(--paper); border: 2px dashed #c8b4a3; border-radius: 1rem; display: flex; flex-direction: column; gap: 0.6rem; padding: 1.25rem; text-align: center; transition: border-color 150ms ease, background 150ms ease; }
+.photo-dropzone.is-dragging { background: #d7eee6; border-color: #326b5a; }
+.photo-upload-icon { align-items: center; background: var(--rose); border: 1.5px solid var(--ink); border-radius: 50%; display: flex; font-size: 2rem; height: 3.5rem; justify-content: center; margin: 0.4rem 0; width: 3.5rem; }
+.photo-upload-label { cursor: pointer; font-size: 0.85rem; font-weight: 800; }
+.photo-file-input { margin: 0; width: 100%; }
+.photo-preview { background: var(--paper-deep); border-radius: 0.5rem; height: auto; max-height: 20rem; object-fit: contain; width: 100%; }
+.photo-file-details { align-items: center; display: flex; gap: 1rem; justify-content: space-between; width: 100%; }
+.photo-file-details > span { color: var(--muted); font-size: 0.75rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.photo-file-details .text-button { flex-shrink: 0; font-size: 0.75rem; }
+.photo-context { min-height: 5.5rem; }
+.field-optional { color: var(--muted); font-weight: 400; }
+.photo-signin { border-top: 1px solid var(--line); padding-top: 0.75rem; }
+.photo-signin > p { color: var(--muted); font-size: 0.85rem; line-height: 1.5; margin: 0 0 0.7rem; }
+.photo-how-it-works { padding: 1.5rem 0; }
+.photo-how-it-works h2 { font-size: clamp(2rem, 4vw, 3.2rem); letter-spacing: -0.065em; line-height: 1.05; margin: 0 0 2rem; }
+.photo-sticker { align-items: center; background: var(--coral); border: 2px solid var(--ink); border-radius: 50%; box-shadow: 4px 4px 0 var(--ink); color: white; display: flex; font-size: 2.5rem; font-weight: 900; height: 5rem; justify-content: center; margin: 0 0 2rem; transform: rotate(-12deg); width: 5rem; }
+.photo-how-it-works ol { display: grid; gap: 1.4rem; list-style: none; margin: 0; padding: 0; }
+.photo-how-it-works li { align-items: start; display: flex; gap: 0.8rem; }
+.photo-how-it-works li > span { align-items: center; background: #d7eee6; border: 1px solid var(--ink); border-radius: 50%; display: flex; flex-shrink: 0; font-size: 0.8rem; font-weight: 800; height: 1.8rem; justify-content: center; width: 1.8rem; }
+.photo-how-it-works strong { font-size: 0.9rem; }
+.photo-how-it-works li p { color: var(--muted); font-size: 0.85rem; line-height: 1.6; margin: 0.3rem 0 0; }
+.photo-gallery { margin-bottom: 4rem; }
+.photo-gallery .section-heading { margin-bottom: 0.75rem; }
+.photo-gallery-description { color: var(--muted); font-size: 0.9rem; line-height: 1.5; margin: 0 0 1.5rem; }
+.photo-gallery-grid { align-items: start; display: grid; gap: 1.25rem; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.photo-meme-card { background: var(--white); border: 1.5px solid var(--line); border-radius: 1rem; min-width: 0; overflow: hidden; }
+.photo-meme-image-link { background: #201c21; display: flex; min-height: 10rem; text-decoration: none; }
+.photo-meme-image { aspect-ratio: 1; height: auto; object-fit: contain; width: 100%; }
+.photo-image-unavailable { align-self: center; color: var(--white); font-size: 0.85rem; line-height: 1.5; padding: 2rem; text-align: center; }
+.photo-meme-card-body { padding: 1rem; }
+.photo-meme-card h3 { font-size: 1rem; letter-spacing: -0.025em; line-height: 1.4; margin: 0 0 1rem; overflow-wrap: anywhere; }
+.photo-meme-card-footer { align-items: center; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; font-size: 0.7rem; gap: 0.7rem; justify-content: space-between; padding-top: 0.85rem; }
+.photo-meme-card-footer time { color: var(--muted); }
+.photo-meme-card-footer a { font-size: 0.75rem; }
+.photo-gallery-empty { background: var(--paper-deep); border: 1.5px dashed #cfbcaa; border-radius: 1rem; padding: 3rem 1rem; text-align: center; }
+.photo-gallery-empty > span { color: var(--coral-dark); font-size: 2.5rem; }
+.photo-gallery-empty h3 { font-size: 1.3rem; letter-spacing: -0.035em; margin: 0.7rem 0; }
+.photo-gallery-empty p { color: var(--muted); font-size: 0.9rem; line-height: 1.5; margin: 0; }
+.photo-load-more { background: var(--white); display: flex; margin: 1.5rem auto 0; }
+
 @media (max-width: 720px) {
   .site-header { align-items: flex-start; flex-direction: column; }
   .header-nav { gap: 0.8rem 1rem; }
@@ -308,6 +358,9 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   .section-heading { align-items: flex-start; flex-direction: column; }
   .caption-promo { align-items: flex-start; flex-direction: column; margin-bottom: 4rem; margin-top: -2rem; }
   .caption-club-layout { grid-template-columns: 1fr; }
+  .photo-studio-layout { grid-template-columns: 1fr; gap: 1rem; margin-bottom: 2.5rem; }
+  .photo-how-it-works { padding-inline: 0.5rem; }
+  .photo-gallery-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 500px) {
@@ -319,4 +372,5 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   .members-card .button, .members-note { grid-column: 1 / -1; }
   .field-grid { grid-template-columns: 1fr; }
   .fine-print { flex-basis: 100%; }
+  .photo-gallery-grid { grid-template-columns: 1fr; }
 }

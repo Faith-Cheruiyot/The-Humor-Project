@@ -22,6 +22,7 @@ export default async function Home() {
           <span>The Humor Project</span>
         </Link>
         <nav className="header-nav" aria-label="Main navigation">
+          <Link href="/photos">Photos</Link>
           {user ? (
             <>
               <Link href="/caption-club">Caption Club</Link>
@@ -92,6 +93,15 @@ export default async function Home() {
           <p>Bring a campus or city moment to Caption Club, let Gemini take a swing, and vote for the line that lands.</p>
         </div>
         <Link className="button button-dark" href="/caption-club">Open Caption Club <span aria-hidden="true">→</span></Link>
+      </section>
+
+      <section className="caption-promo photo-promo" aria-labelledby="photo-promo-title">
+        <div>
+          <p className="eyebrow">AI retrieval · Photos</p>
+          <h2 id="photo-promo-title">Your photo. Our punchline.</h2>
+          <p>Upload a photo and get a finished meme with an AI-written caption on the picture. Every generation stays in your own card gallery.</p>
+        </div>
+        <Link className="button button-dark" href="/photos">Make a photo meme <span aria-hidden="true">→</span></Link>
       </section>
 
       <section className="community-section" id="community" aria-labelledby="community-title">
