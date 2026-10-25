@@ -1,5 +1,5 @@
 import { createClient } from "@/utils/supabase/server";
-import { PHOTO_BUCKET, PHOTO_PAGE_SIZE, type PhotoGalleryPage } from "@/lib/photos";
+import { PHOTO_BUCKET, PHOTO_PAGE_SIZE, photoFeedSince, type PhotoGalleryPage, type PhotoFeedOptions } from "@/lib/photos";
 import type { GalleryCursor } from "@/lib/gallery-cursor";
 
 export const PHOTO_COLUMNS = "id, caption, created_at, created_by, image_path, width, height, upvotes, downvotes";
@@ -8,16 +8,19 @@ type GalleryRow = {
   image_path: string; width: number; height: number;
   upvotes: number; downvotes: number;
 };
-export async function loadPhotoGallery(supabase: ReturnType<typeof createClient>, userId: string | null, cursor?: GalleryCursor): Promise<PhotoGalleryPage> {
+export async function loadPhotoGallery(supabase: ReturnType<typeof createClient>, userId: string | null, cursor?: GalleryCursor,
+  options: PhotoFeedOptions = { period: "week", limit: PHOTO_PAGE_SIZE }): Promise<PhotoGalleryPage> {
   let query = supabase.from("photo_generations").select(PHOTO_COLUMNS)
-    .order("created_at", { ascending: false }).order("id", { ascending: false }).limit(PHOTO_PAGE_SIZE + 1);
+    .order("created_at", { ascending: false }).order("id", { ascending: false }).limit(options.limit + 1);
+  const since = photoFeedSince(options.period);
+  if (since) query = query.gte("created_at", since);
   if (cursor) {
     query = query.or(`created_at.lt.${cursor.createdAt},and(created_at.eq.${cursor.createdAt},id.lt.${cursor.id})`);
   }
   const { data, error } = await query;
   if (error) throw new Error("The meme feed could not be loaded. Please try again.");
   const rows = (data ?? []) as GalleryRow[];
-  const page = rows.slice(0, PHOTO_PAGE_SIZE);
+  const page = rows.slice(0, options.limit);
   const { data: signedUrls } = page.length
     ? await supabase.storage.from(PHOTO_BUCKET).createSignedUrls(page.map((row) => row.image_path), 3600)
     : { data: [] };
@@ -34,7 +37,7 @@ export async function loadPhotoGallery(supabase: ReturnType<typeof createClient>
   return {
     generations: page.map(({ image_path, ...row }) => ({ ...row, imageUrl: urls.get(image_path) || null,
       authorName: names.get(row.created_by) ?? "Club member", myVote: myVotes.get(row.id) ?? null })),
-    nextCursor: rows.length > PHOTO_PAGE_SIZE && lastRow
+    nextCursor: rows.length > options.limit && lastRow
       ? Buffer.from(JSON.stringify({ createdAt: lastRow.created_at, id: lastRow.id })).toString("base64url") : null,
   };
 }

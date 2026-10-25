@@ -10,10 +10,10 @@ export async function GET(request: Request) {
     const supabase = createClient(await cookies());
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      let destination = new URL("/profile", requestUrl.origin);
-      try { destination = new URL(requestUrl.searchParams.get("next") || "/profile", requestUrl.origin); }
-      catch { /* Fall back to the profile for malformed return URLs. */ }
-      return NextResponse.redirect(destination.origin === requestUrl.origin ? destination : new URL("/profile", requestUrl.origin));
+      let destination = new URL("/", requestUrl.origin);
+      try { destination = new URL(requestUrl.searchParams.get("next") || "/", requestUrl.origin); }
+      catch { /* Fall back to the feed for malformed return URLs. */ }
+      return NextResponse.redirect(destination.origin === requestUrl.origin ? destination : new URL("/", requestUrl.origin));
     }
   }
 

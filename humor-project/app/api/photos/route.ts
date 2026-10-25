@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
-import { PHOTO_BUCKET, PHOTO_MAX_BYTES, PHOTO_MIME_TYPES } from "@/lib/photos";
+import { PHOTO_BUCKET, PHOTO_MAX_BYTES, PHOTO_MIME_TYPES, parsePhotoFeedOptions } from "@/lib/photos";
 import { generatePhotoCaption, PHOTO_MODEL, PhotoCaptionError } from "@/lib/gemini-photo";
 import { preparePhoto } from "@/lib/photo-processing";
 import { loadPhotoGallery, PHOTO_COLUMNS } from "@/lib/photo-gallery";
@@ -54,15 +54,18 @@ async function readPhotoForm(request: Request) {
 export async function GET(request: Request) {
   const supabase = createClient(await cookies());
   const { data: { user } } = await supabase.auth.getUser();
-  const rawCursor = new URL(request.url).searchParams.get("cursor");
+  const parameters = new URL(request.url).searchParams;
+  const rawCursor = parameters.get("cursor");
   let cursor;
+  let options;
   try {
     cursor = rawCursor ? parseGalleryCursor(rawCursor) : undefined;
+    options = parsePhotoFeedOptions(parameters);
   } catch {
     return NextResponse.json({ error: "The gallery page is invalid. Refresh and try again." }, { status: 400, headers: privateHeaders });
   }
   try {
-    return NextResponse.json(await loadPhotoGallery(supabase, user?.id ?? null, cursor), { headers: privateHeaders });
+    return NextResponse.json(await loadPhotoGallery(supabase, user?.id ?? null, cursor, options), { headers: privateHeaders });
   } catch {
     return NextResponse.json({ error: "The meme feed could not be loaded. Please try again." }, { status: 500, headers: privateHeaders });
   }

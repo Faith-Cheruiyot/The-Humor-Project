@@ -2,7 +2,8 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
-import AuthControls from "@/components/auth-controls";
+import SiteHeader from "@/components/site-header";
+import SiteFooter from "@/components/site-footer";
 import ProfileEditor from "@/components/profile-editor";
 
 export default async function ProfilePage() {
@@ -22,31 +23,11 @@ export default async function ProfilePage() {
   const avatarUrl = profile?.avatar_path
     ? supabase.storage.from("avatars").getPublicUrl(profile.avatar_path).data.publicUrl
     : (user.user_metadata?.avatar_url as string | undefined) ?? null;
-  const needsName = !firstName.trim() || !lastName.trim();
-
   return (
-    <main className="site-shell">
-      <header className="site-header">
-        <Link className="brand" href="/" aria-label="The Humor Project home">
-          <span className="brand-mark" aria-hidden="true">ha!</span>
-          <span>The Humor Project</span>
-        </Link>
-        <nav className="header-nav" aria-label="Main navigation">
-          <Link href="/">Community</Link>
-          <Link href="/after-hours">After hours</Link>
-          <AuthControls signedIn email={user.email} />
-        </nav>
-      </header>
-
-      <section className="profile-page-heading">
-        <p className="eyebrow">Your corner of the comedy club</p>
-        <h1>{needsName ? "Let’s get to know you." : "Your profile"}</h1>
-        <p>
-          {needsName
-            ? "Add your name to finish setting up your profile. You can change it any time."
-            : "A few details make it easier for the community to say hello."}
-        </p>
-      </section>
+    <div className="app-page">
+      <SiteHeader user={user} active="profile" />
+      <main className="profile-shell">
+      <div className="page-heading"><p className="eyebrow">YOUR ACCOUNT</p><h1>Your profile.</h1><p>The name and photo behind your posts.</p></div>
 
       <section className="profile-panel" aria-labelledby="edit-profile-title">
         <div className="panel-heading">
@@ -65,7 +46,9 @@ export default async function ProfilePage() {
         />
       </section>
 
-      <p className="back-link"><Link href="/">← Back to the community</Link></p>
-    </main>
+      <p className="back-link"><Link href="/">← Back to the feed</Link></p>
+      </main>
+      <SiteFooter />
+    </div>
   );
 }

@@ -76,68 +76,43 @@ export default function PhotoStudio({ userId }: Props) {
   }
 
   return (
-    <>
-      <div className="photo-studio-layout">
-        <section className="caption-maker-panel photo-maker" aria-labelledby="photo-maker-title">
-          <p className="eyebrow">01 · Bring the photo</p>
-          <h2 id="photo-maker-title">Make it a meme</h2>
-          <p>A funny little moment deserves a punchline.</p>
-          <form className="caption-form" onSubmit={generateMeme} aria-busy={busy}>
-            <div className={`photo-dropzone${dragging ? " is-dragging" : ""}${photo ? " has-photo" : ""}`}
-              onDragOver={(event) => { event.preventDefault(); if (!busy) setDragging(true); }}
-              onDragLeave={() => setDragging(false)} onDrop={dropPhoto}>
-              {photo ? (
-                <Image className="photo-preview" src={photo.preview} alt="Your selected photo" width={800} height={600} unoptimized />
-              ) : <span className="photo-upload-icon" aria-hidden="true">↥</span>}
-              <label className="photo-upload-label" htmlFor="meme-photo">{photo ? "Choose a different photo" : "Choose a photo or drop it here"}</label>
-              <input ref={input} className="file-input photo-file-input" id="meme-photo" name="photo" type="file"
-                accept="image/jpeg,image/png,image/webp" disabled={busy} aria-describedby="photo-file-help"
-                onChange={(event) => { choosePhoto(event.target.files?.[0]); event.target.value = ""; }} />
-              <p className="field-hint" id="photo-file-help">JPG, PNG, or WebP · up to 4 MB · at least 128 × 128 px</p>
-              {photo ? (
-                <div className="photo-file-details">
-                  <span title={photo.file.name}>{photo.file.name}</span>
-                  <button className="text-button" type="button" disabled={busy} onClick={() => { setPhoto(null); setError(""); setMessage(""); }}>Remove</button>
-                </div>
-              ) : null}
-            </div>
-            <label className="field-label" htmlFor="photo-context">A little context <span className="field-optional">(optional)</span></label>
-            <textarea className="caption-textarea photo-context" id="photo-context" name="context" maxLength={500}
-              placeholder="For example: me pretending I understood the lecture" value={context}
-              disabled={busy} onChange={(event) => setContext(event.target.value)} />
-            <div className="caption-form-footer">
-              <span>{context.length}/500</span>
-              <button className="button button-primary" type="submit" disabled={busy || !photo || !signedIn}>
-                {busy ? "Making your meme…" : "Generate meme"}
-              </button>
-            </div>
-            {!signedIn ? <div className="photo-signin"><p>Sign in to generate a caption and share your photo.</p><AuthControls returnTo="/photos" /></div> : null}
-            <p className="caption-privacy-note">Your photo and context are sent to Gemini to write the caption. Your photo and generated caption will be public on the homepage.</p>
-            {message ? <p className="form-message form-success" role="status">{message}</p> : null}
-            {error ? <p className="form-message form-error" role="alert">{error}</p> : null}
-          </form>
-        </section>
-
-        <aside className="photo-how-it-works" aria-labelledby="photo-how-title">
-          <div className="photo-sticker" aria-hidden="true">ha!</div>
-          <p className="eyebrow">Photo in. Punchline out.</p>
-          <h2 id="photo-how-title">Your moment,<br />with a little extra ha.</h2>
-          <ol>
-            <li><span>1</span><div><strong>Upload a photo</strong><p>Campus chaos, a dramatic pet, or your everyday comedy.</p></div></li>
-            <li><span>2</span><div><strong>Let AI find the funny</strong><p>Gemini writes a caption inspired by what’s in the picture.</p></div></li>
-            <li><span>3</span><div><strong>Share with the club</strong><p>Your photo and caption appear together in the homepage feed, where members can rate them.</p></div></li>
-          </ol>
-        </aside>
-      </div>
-
-      <section className="photo-gallery" aria-labelledby="photo-result-title">
-        <div className="section-heading">
-          <div><p className="eyebrow">02 · Share the laugh</p><h2 id="photo-result-title" ref={resultHeading} tabIndex={-1}>Your latest post</h2></div>
-          <Link className="text-link" href="/#meme-feed">See the community feed →</Link>
-        </div>
-        {latest ? <div className="photo-result-card"><PhotoMemeCard key={latest.id} generation={latest} userId={userId} /></div>
-          : <div className="photo-gallery-empty"><span aria-hidden="true">☺</span><h3>Your captioned photo belongs here.</h3><p>Every generation gets its own card in the community feed.</p></div>}
+    <div className="studio-layout">
+      <section className="studio-panel" aria-labelledby="photo-maker-title">
+        <div className="studio-panel-heading"><span className="step-number">01</span><div><h2 id="photo-maker-title">Bring the photo.</h2><p>We’ll take care of the punchline.</p></div></div>
+        <form className="caption-form" onSubmit={generateMeme} aria-busy={busy}>
+          <div className={`upload-zone${dragging ? " is-dragging" : ""}${photo ? " has-photo" : ""}`}
+            onDragOver={(event) => { event.preventDefault(); if (!busy) setDragging(true); }} onDragLeave={() => setDragging(false)} onDrop={dropPhoto}>
+            {photo ? <Image className="photo-preview" src={photo.preview} alt="Your selected photo" width={800} height={600} unoptimized />
+              : <><svg className="upload-illustration" viewBox="0 0 80 80" fill="none" aria-hidden="true"><rect x="13" y="17" width="54" height="46" rx="6"/><circle cx="29" cy="32" r="5"/><path d="m15 56 17-16 12 11 9-8 13 13M55 9v16M47 17h16"/></svg><p className="upload-title">Drop something funny.</p><p className="upload-subtitle">Or something that could be.</p></>}
+            <label className={photo ? "upload-change" : "button button-secondary upload-choice"} htmlFor="meme-photo">{photo ? "Choose a different photo" : "Choose a photo"}</label>
+            <input ref={input} className="visually-hidden" id="meme-photo" name="photo" type="file" accept="image/jpeg,image/png,image/webp"
+              disabled={busy} aria-describedby="photo-file-help" onChange={(event) => { choosePhoto(event.target.files?.[0]); event.target.value = ""; }} />
+            <p className="field-hint" id="photo-file-help">JPG, PNG or WebP · Max 4 MB · Min 128 × 128 px</p>
+            {photo ? <div className="upload-selected-meta"><span title={photo.file.name}>{photo.file.name}</span><button className="text-button" type="button" disabled={busy}
+              onClick={() => { setPhoto(null); setError(""); setMessage(""); }}>Remove</button></div> : null}
+          </div>
+          <div className="field-heading"><label className="field-label" htmlFor="photo-context">Set the scene</label><span>Optional</span></div>
+          <textarea className="caption-textarea" id="photo-context" name="context" maxLength={500} placeholder="Me pretending I understood the lecture…"
+            value={context} disabled={busy} onChange={(event) => setContext(event.target.value)} />
+          <div className="character-count">{context.length} / 500</div>
+          <button className="button button-primary generate-button" type="submit" disabled={busy || !photo || !signedIn}>
+            {busy ? "Finding the punchline…" : "Generate & post"}<span aria-hidden="true">↗</span>
+          </button>
+          {!signedIn ? <div className="studio-signin"><p>Sign in to post your photo and join the feed.</p><AuthControls returnTo="/photos" /></div> : null}
+          <p className="caption-privacy-note">Gemini reads your photo and context to write the caption. Your photo and caption will be public; optional context stays private.</p>
+          {message ? <p className="form-message form-success" role="status">{message}</p> : null}
+          {error ? <p className="form-message form-error" role="alert">{error}</p> : null}
+        </form>
       </section>
-    </>
+      <section className="studio-preview" aria-labelledby="photo-result-title">
+        <div className="preview-heading"><span className="eyebrow">THE FINAL TAKE</span><h2 id="photo-result-title" ref={resultHeading} tabIndex={-1}>{latest ? "That’s a keeper." : "Your next post."}</h2></div>
+        {latest ? <PhotoMemeCard key={latest.id} generation={latest} userId={userId} /> : <div className="studio-empty-preview">
+          <div className="preview-mock-image"><span className="empty-smile" aria-hidden="true">:)</span><span>Your photo here</span></div>
+          <div className="preview-mock-caption"><span /><span /><p>One photo. One fresh punchline.</p></div>
+        </div>}
+        <p className="preview-note">Original photo. Caption underneath. Always.</p>
+        <Link className="text-link preview-feed-link" href="/#meme-feed">Back to the feed <span aria-hidden="true">→</span></Link>
+      </section>
+    </div>
   );
 }

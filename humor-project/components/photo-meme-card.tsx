@@ -45,32 +45,30 @@ export default function PhotoMemeCard({ generation, userId }: { generation: Phot
 
   const score = counts.upvotes - counts.downvotes;
   return (
-    <article className="photo-meme-card">
-      <div className="photo-meme-image-link">
-        {generation.imageUrl ? <Image className="photo-meme-image" src={generation.imageUrl} alt={`Photo shared by ${generation.authorName}`}
-          width={generation.width} height={generation.height} unoptimized /> : <span className="photo-image-unavailable">Photo preview unavailable. Refresh the feed to try again.</span>}
-      </div>
-      <div className="photo-meme-card-body">
-        <h3>{generation.caption}</h3>
-        <div className="photo-meme-card-footer">
-          <span className="caption-card-byline">{generation.authorName}</span>
-          <time dateTime={generation.created_at}>{new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeZone: "America/New_York" }).format(new Date(generation.created_at))}</time>
+    <article className="meme-card">
+      <div className="meme-card-header">
+        <div className="meme-author"><span className="meme-avatar" aria-hidden="true">{generation.authorName[0]?.toUpperCase() ?? "H"}</span>
+          <div><span className="meme-author-name">{generation.authorName}</span><time dateTime={generation.created_at}>{new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "America/New_York" }).format(new Date(generation.created_at))}</time></div>
         </div>
-        <div className="caption-vote-row photo-rating-row">
-          <div className="caption-vote-controls" aria-label={`Rate meme: ${generation.caption}`}>
-            <button className={`caption-vote-button${myVote === 1 ? " is-selected" : ""}`} type="button"
-              aria-label={`Upvote meme, ${counts.upvotes} upvotes`} aria-pressed={myVote === 1}
-              disabled={!userId || Boolean(myVote) || busy} onClick={() => void rate(1)}><span aria-hidden="true">↑</span> {counts.upvotes}</button>
-            <button className={`caption-vote-button${myVote === -1 ? " is-selected" : ""}`} type="button"
-              aria-label={`Downvote meme, ${counts.downvotes} downvotes`} aria-pressed={myVote === -1}
-              disabled={!userId || Boolean(myVote) || busy} onClick={() => void rate(-1)}><span aria-hidden="true">↓</span> {counts.downvotes}</button>
-          </div>
-          <span className="caption-score">Score {score > 0 ? `+${score}` : score}</span>
+        <div className="meme-votes" role="group" aria-label={`Rate meme: ${generation.caption}`}>
+          <button className={`vote-arrow${myVote === 1 ? " is-selected" : ""}`} type="button" title={userId ? `${counts.upvotes} upvotes` : "Sign in to vote"}
+            aria-label={`Upvote meme, ${counts.upvotes} upvotes`} aria-pressed={myVote === 1} disabled={!userId || Boolean(myVote) || busy} onClick={() => void rate(1)}>
+            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 12 5-5 5 5" /></svg>
+          </button>
+          <span className={`meme-score${myVote ? " has-vote" : ""}`} aria-label={`Score ${score}`}>{score}</span>
+          <button className={`vote-arrow${myVote === -1 ? " is-selected" : ""}`} type="button" title={userId ? `${counts.downvotes} downvotes` : "Sign in to vote"}
+            aria-label={`Downvote meme, ${counts.downvotes} downvotes`} aria-pressed={myVote === -1} disabled={!userId || Boolean(myVote) || busy} onClick={() => void rate(-1)}>
+            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 8 5 5 5-5" /></svg>
+          </button>
         </div>
-        {message ? <p className="caption-feed-note" role="status">{message}</p> : null}
-        {error ? <p className="form-message form-error" role="alert">{error}</p> : null}
-        {!userId ? <p className="caption-feed-note">Sign in to rate this meme.</p> : null}
       </div>
+      <div className="meme-image-frame">
+        {generation.imageUrl ? <Image className="meme-image" src={generation.imageUrl} alt={`Photo shared by ${generation.authorName}`} width={generation.width} height={generation.height} unoptimized />
+          : <span className="photo-image-unavailable">The photo couldn’t load. Try refreshing the feed.</span>}
+      </div>
+      <div className="meme-card-caption"><h3>{generation.caption}</h3></div>
+      {message ? <p className="card-message" role="status">{message}</p> : null}
+      {error ? <p className="card-message card-error" role="alert">{error}</p> : null}
     </article>
   );
 }

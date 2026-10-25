@@ -4,6 +4,7 @@ import sharp from "sharp";
 import { preparePhoto } from "../lib/photo-processing.ts";
 import { generatePhotoCaption, PhotoCaptionError } from "../lib/gemini-photo.ts";
 import { parseGalleryCursor } from "../lib/gallery-cursor.ts";
+import { parsePhotoFeedOptions, photoFeedSince } from "../lib/photos.ts";
 
 const originalFetch = globalThis.fetch;
 const originalKey = process.env.GEMINI_API_KEY;
@@ -93,4 +94,22 @@ test("missing configuration, blocked responses, provider errors, and empty capti
     globalThis.fetch = async () => response;
     await assert.rejects(() => generatePhotoCaption(Buffer.from("test"), ""), PhotoCaptionError);
   }
+});
+
+
+test("feed controls accept supported periods and page sizes and reject invalid requests", () => {
+  assert.deepEqual(parsePhotoFeedOptions(new URLSearchParams()), { period: "week", limit: 8 });
+  assert.deepEqual(parsePhotoFeedOptions(new URLSearchParams("period=month&limit=12")), { period: "month", limit: 12 });
+  assert.deepEqual(parsePhotoFeedOptions(new URLSearchParams("period=all&limit=24")), { period: "all", limit: 24 });
+  for (const query of ["period=invalid", "limit=-1", "limit=9999", "limit=NaN", "limit=8.5"]) {
+    assert.throws(() => parsePhotoFeedOptions(new URLSearchParams(query)));
+  }
+});
+
+test("feed date filters use the selected rolling window and leave all-time unrestricted", () => {
+  const now = new Date("2026-10-25T12:00:00.000Z");
+  assert.equal(photoFeedSince("week", now), "2026-10-18T12:00:00.000Z");
+  assert.equal(photoFeedSince("month", now), "2026-09-25T12:00:00.000Z");
+  assert.equal(photoFeedSince("year", now), "2025-10-25T12:00:00.000Z");
+  assert.equal(photoFeedSince("all", now), undefined);
 });
